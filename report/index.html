@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Multimodal Speech Emotion Recognition on RAVDESS</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+<p><a href="../">← Interactive overview</a> · <a href="report.pdf">PDF</a> · <a href="https://github.com/tharencandi/fer-ser-fusion">GitHub</a></p>
+<header id="title-block-header">
+<h1 class="title">Multimodal Speech Emotion Recognition with Late Fusion
+of Self-Supervised Audio Models and Visual Blendshape Features on
+RAVDESS</h1>
+</header>
+<p>Tharen Emmanuel Candi tharenemmanuel.candi@studenti.unipd.it</p>
+<h1 id="introduction">1. Introduction</h1>
+<p>Speech Emotion Recognition (SER) is a critical component for many
+downstream applications, but it requires a deep understanding of
+intricate paralinguistic cues and pushes the limits of vocal acoustic
+variability. Consequently, SER remains a strong benchmark for evaluating
+speech foundation models (SFMs), as it tests the richness of their
+embedding spaces. It also serves a candidate task for the application of
+multimodal models, as human emotion recognition is inherently
+multimodal.</p>
+<p>Using the RAVDESS dataset as a benchmark, we evaluate the
+effectiveness of self-supervised encoders, comparing a general SFM
+(wav2vec 2.0) with an emotion-specialized SSL model (emotion2vec). We
+also evaluate the effectiveness of late fusion temperature calibrated
+sum fusion) with a facial emotion recognition (FER) modality.</p>
+<p>This project addresses three primary research questions on the
+performance of ER on the RAVDESS:</p>
+<ol type="1">
+<li>Under matched data splits and labels, how does frozen wav2vec 2.0
+compare to LoRA-adapted wav2vec 2.0?</li>
+<li>How does an emotion2vec linear probe compare to general
+wav2vec-based pipelines?</li>
+<li>Does calibrated late fusion with a visual XGBoostRF FER model
+improve unimodal performance?</li>
+</ol>
+<p>All systems in this study use the same actor-disjoint split, labels,
+and test partition.</p>
+<h1 id="background-and-related-work">2. Background and Related Work</h1>
+<h2 id="ravdess-as-an-evaluation-benchmark">2.1 RAVDESS as an evaluation
+benchmark</h2>
+<p>RAVDESS is a validated multimodal emotional dataset with controlled
+statements, multiple emotions, and explicit intensity levels, recorded
+from 24 professional actors [1]. Its strengths are recording quality,
+and balanced class structure; its key limitation is that it remains
+acted and therefore only partially representative of natural
+conversational affect [1].</p>
+<h2 id="dataset-selection-rationale-for-this-project">2.1.1 Dataset
+selection rationale for this project</h2>
+<p>RAVDESS was selected for both scientific and practical reasons:</p>
+<ul>
+<li>It is natively multimodal (audio and video), matching the core
+question of SER-FER late fusion [1].</li>
+<li>It uses fixed lexical content across emotions, which helps isolate
+affective cues from language variation [1].</li>
+<li>Its original emotion inventory is balanced, which makes it a cleaner
+benchmark for controlled model comparison [1].</li>
+<li>It is extensively used as an SER evaluation benchmark, which
+supports direct comparison with prior work [1,5].</li>
+<li>Its size and structure fit actor-disjoint experiments under project
+compute constraints [1,5].</li>
+</ul>
+<h2
+id="audio-representations-general-purpose-ssl-emotion-specialized-ssl-and-parameter-efficient-adaptation">2.2
+Audio representations: general-purpose SSL, emotion-specialized SSL, and
+parameter-efficient adaptation</h2>
+<p>wav2vec 2.0 learns contextual speech representations through masked
+prediction over broad, general-purpose speech corpora (e.g. LibriSpeech,
+LibriVox-scale data) [2]. Its pretraining objective targets speech
+structure generally, thus SER performance depends on how well an
+adapted-classifier-head can recover affect-relevant structure that the
+encoder was never explicitly optimized to represent. We use the
+wav2vec2-base checkpoint, following Pepino et al.’s finding that
+base-scale embeddings give their strongest SER results [5]; the same
+work also finds that emotion cues are distributed across multiple
+transformer layers rather than concentrated at the top, which motivates
+the layer-weighted pooling used in Section 3.5.</p>
+<p>In Constrast, emotion2vec uses emotion-centered self-supervised
+distillation on ~262h of emotion-labeled speech (IEMOCAP, MELD, MEAD,
+CMU-MOSEI, MSP-Podcast) [3], making it task-aligned by construction. In
+this project, we use the <code>iic/emotion2vec_base</code> checkpoint as
+a frozen backbone and train a lightweight classifier head on top under
+the same split/label protocol used for wav2vec.</p>
+<p>LoRA offers a middle path for adapting the general-purpose encoder
+toward the task without the cost of catastrohic forgetting, and
+overfitting that is risked with full fine-tuning on a small SER datasets
+[4].</p>
+<h2 id="visual-fer-with-landmarks-and-blendshapes">2.3 Visual FER with
+landmarks and blendshapes</h2>
+<p>Facial blendshape coefficients (52 MediaPipe expression channels) are
+used instead of raw video as video is computationally expensive and
+contains substantial variation that is not directly useful for FER (for
+example background, lighting, and appearance-specific detail).
+Blendshapes reduce the information to facial-action intensity directly
+relevant to expression [8].</p>
+<p>As suported by the Mehrabian 7-38-55 Rule, combining modalities helps
+disambiguate cases that are ambiguous in audio alone (e.g. laughter
+vs. scream, sad vs. neutral prosody) [10], which is evaluated in section
+4.</p>
+<h1 id="methodology">3. Methodology</h1>
+<h2 id="dataset-and-label-space">3.1 Dataset and label space</h2>
+<ul>
+<li>Dataset: RAVDESS speech subset as loaded from xbgoose/ravdess.</li>
+<li>Target classes: angry, disgust, fearful, happy, neutral, sad,
+surprised.</li>
+<li>Label normalization: calm was merged into neutral across all
+experiments.</li>
+</ul>
+<p>The calm -&gt; neutral merge is justified by the following
+factors:</p>
+<ul>
+<li>The calm-to-neutral merge is applied uniformly across all
+experiments to preserve one shared 7-class label space for fair
+comparison.</li>
+<li>In RAVDESS, calm is introduced as a baseline emotion that is
+perceptually close to neutral (with potentially mild positive valence)
+rather than a distinct high-arousal category [1].</li>
+<li>Lastly, the merge has precedent in existing SER work on RAVDESS
+[5].</li>
+</ul>
+<p>However, the merge introduces a mild class imbalance, so
+inverse-frequency class weights are used during training of the
+supervised audio and visual classifiers.</p>
+<h2 id="split-protocol">3.2 Split protocol</h2>
+<ul>
+<li>Split type: actor-disjoint.</li>
+<li>Actor allocation: 16 train, 4 validation, 4 test.</li>
+<li>Sample counts: 960 train, 240 validation, 240 test.</li>
+<li>Random seed: 42.</li>
+<li>Class ratio’s balanced across splits</li>
+</ul>
+<p>Actor-disjoint partitioning avoids speaker leakage, better tests
+generalization by preventing actor memorization.</p>
+<p>Data loading follows the split protocol directly: <code>Subset</code>
+datasets are wrapped in PyTorch <code>DataLoader</code>s with
+<code>batch_size=8, shuffle=True</code> for training and
+<code>batch_size=64, shuffle=False</code> for validation/test. The
+training loader is shuffled to reduce order effects during optimisation,
+while validation/test loaders are fixed for deterministic checkpoint
+selection and reporting. For late fusion, audio and blendshape loaders
+are both kept ordered (<code>shuffle=False</code>) so each batch
+contains the same utterances in the same order across modalities,
+guaranteeing 1:1 pairing at fusion time. Blendshape features were
+precomputed offline and stored on Google Drive, then matched back to the
+<code>xbgoose/ravdess</code> Hugging Face split indices using an
+explicit alignment strategy; this prevents cross-split mixing and
+therefore avoids data leakage in the FER and fusion evaluations.</p>
+<h2 id="audio-preprocessing">3.3 Audio preprocessing</h2>
+<ul>
+<li>Target sample rate: 16 kHz.</li>
+<li>Max duration: 5.27 s (zero-padded or truncated), corresponding to
+the longest duration found in RAVDESS.</li>
+</ul>
+<h2 id="augmentation">3.4 Augmentation</h2>
+<p>For both wav2vec-based models, SpecAugment was injected through the
+backbone configuration with <code>mask_time_prob = 0.05</code>,
+<code>mask_time_length = 15</code>,
+<code>mask_feature_prob = 0.05</code>, and
+<code>mask_feature_length = 12</code>. Time masking is kept small to
+avoid removing short prosodic cues that could be important for emotion
+discrimination.</p>
+<h2 id="audio-models">3.5 Audio models</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Model</th>
+<th>Backbone</th>
+<th>Adaptation strategy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>wav2vec2 weighted-layer linear probe</td>
+<td>wav2vec2-base</td>
+<td>Backbone frozen; all 13 hidden states are softmax-weighted, then
+passed through Linear(hidden_size -&gt; 128) + ReLU + Dropout(0.2),
+mean-pooled over time, and classified with Linear(128 -&gt; 7) [5]</td>
+</tr>
+<tr>
+<td>LoRA-adapted wav2vec 2.0</td>
+<td>wav2vec2-base</td>
+<td>LoRA adapters on attention projections (<code>q_proj</code>,
+<code>v_proj</code>) with rank r=4, alpha=4, dropout=0.25, and bias
+disabled; the same softmax-weighted 13-layer pooling is used, followed
+by a sigmoid feature gate, LayerNorm(hidden_size), and
+Linear(hidden_size -&gt; 7) [4]</td>
+</tr>
+<tr>
+<td>emotion2vec linear probe</td>
+<td>iic/emotion2vec_base</td>
+<td>Backbone frozen; pooled embedding (hidden size 768) -&gt; Linear(768
+-&gt; 128) + ReLU + Dropout(0.20) + Linear(128 -&gt; 7)</td>
+</tr>
+</tbody>
+</table>
+<p>For the wav2vec-based models, the layer weights are learned over all
+13 hidden-state tensors produced by wav2vec2-base: the CNN
+feature-extractor output plus the 12 transformer layers, following
+Pepino et al. [5], followed by softmax normalisation. The wav2vec2
+weighted-layer linear probe keeps a small 128-dimensional projection
+head to stay lightweight. The LoRA branch keeps the same layer weighting
+but adds a feature gate and a direct hidden-size classifier so the
+effect of backbone adaptation is isolated from changes in downstream
+capacity.</p>
+<p>The LoRA setting is intentionally conservative: r=4 gives each
+adapted projection only four update directions, which acts as a
+regulariser on the small training set, and lora_alpha=4 keeps the
+effective scaling at 1.0. The layer-weighting and feature-gating ideas
+are taken from the PEFT paper [4], but we keep the downstream classifier
+intentionally simple, for computational effiency and also so the
+comparison reflects the effect of the backbone adaptation rather than a
+larger prediction head.</p>
+<p>For emotion2vec, we keep the backbone frozen and train a lightweight
+classifier head on pooled utterance-level embeddings (hidden size
+768):</p>
+<pre><code>self.head = nn.Sequential(
+   nn.Linear(hidden_size, 128),
+   nn.ReLU(),
+   nn.Dropout(dropout_prob),
+   nn.Linear(128, num_classes)
+)</code></pre>
+<p>Unlike wav2vec Exp1, no hidden-layer weighting is used in this
+branch.</p>
+<h2 id="visual-fer-model">3.6 Visual FER model</h2>
+<ul>
+<li><p>Input: facial blendshape sequences extracted from RAVDESS
+videos.</p></li>
+<li><p>Feature design: 369-dimensional summary vector computed as 7
+per-channel descriptors over 52 blendshape channels (mean, standard
+deviation, max, min, range, velocity mean, velocity max) plus 5
+inter-group ratios.</p></li>
+<li><p>Ratio groups: brow/eye, brow/mouth-jaw, eye/mouth-jaw,
+cheek-nose/mouth-jaw, and cheek-nose/brow.</p></li>
+<li><p>Classifier: XGBRFClassifier with n_estimators=300,
+learning_rate=1.0, max_depth=10, subsample=0.8, colsample_bytree=0.3,
+random_state=42, and eval_metric=mlogloss; training uses balanced sample
+weights.</p></li>
+<li><p>We use utterance-level blendshape summary features because visual
+sequence/deep baselines with neural architecturals (LSTM, GRU, 1D-CNN,
+MLP) tended to overfit in early investigations.</p></li>
+</ul>
+<h2 id="late-fusion">3.7 Late fusion</h2>
+<p>For each utterance, audio and visual model logits are calibrated and
+summed:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover><mi>y</mi><mo accent="true">̂</mo></mover><mo>=</mo><mrow><mi>arg</mi><mo>&#8289;</mo></mrow><munder><mi>max</mi><mi>c</mi></munder><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><msubsup><mi>z</mi><mi>c</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>a</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><msub><mi>T</mi><mi>a</mi></msub></mfrac><mo>+</mo><mfrac><msubsup><mi>z</mi><mi>c</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>v</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><msub><mi>T</mi><mi>v</mi></msub></mfrac><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
+\hat{y} = \arg\max_c \left( \frac{z^{(a)}_c}{T_a} + \frac{z^{(v)}_c}{T_v} \right)
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>z</mi><mi>c</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>a</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">z^{(a)}_c</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msubsup><mi>z</mi><mi>c</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>v</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><annotation encoding="application/x-tex">z^{(v)}_c</annotation></semantics></math>
+are class logits from audio and visual branches, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mi>a</mi></msub><mo>,</mo><msub><mi>T</mi><mi>v</mi></msub><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">T_a, T_v &gt; 0</annotation></semantics></math>
+are temperature scaling factors estimated on validation data. For the
+emotion2vec branch, audio logits are taken directly from the linear
+probe head in the shared 7-class label space. Visual logits are taken as
+pre-softmax XGBoost margins. Both branches are temperature-calibrated
+before summation.</p>
+<p>Hybrid feature-level fusion was not used because it would likely
+overfit on the available data and is less practical with a tree-based
+FER branch (XGBoostRF). We therefore use temperature-calibrated logit
+summation, which is simple, transparent, and reduces magnitude-driven
+modality dominance [9]; calibration is fit on validation data and
+applied to the held-out test set. The same validation split is used for
+unimodal checkpoint selection and fusion calibration, note that the
+unimodal branches are frozen before fusion-stage calibration.</p>
+<h2 id="metrics">3.8 Metrics</h2>
+<ul>
+<li>Accuracy.</li>
+<li>Macro-F1.</li>
+<li>Macro-precision and macro-recall.</li>
+<li>Per-class precision, recall, F1 from classification reports.</li>
+<li>Additional intensity-stratified accuracy (normal vs strong) for
+qualitative robustness analysis.</li>
+</ul>
+<h2 id="implementation-details">3.9 Implementation details</h2>
+<p>Detailed implementation settings and exact hyperparameters are
+provided in the accompanying experiment notebook (.ipynb). Automatic
+mixed precision (AMP) was used during training for both wav2vec-based
+models to improve efficiency. Training used early stopping with
+patience, and the best validation checkpoint was saved and restored for
+test evaluation, they are also available on google drive.</p>
+<p>For both supervised wav2vec audio runs (weighted-layer linear probe
+and LoRA wav2vec2), the training hyperparameters were: learning rate
+1e-3, weight decay 1e-2, dropout 0.25, maximum epochs 25, early-stopping
+patience 5, and class weighting enabled.</p>
+<p>For both supervised wav2vec audio runs, the training objective was
+class-weighted cross-entropy loss (PyTorch <code>CrossEntropyLoss</code>
+with inverse-frequency class weights).</p>
+<p>Both runs used the AdamW optimiser with a CosineAnnealingLR
+scheduler.</p>
+<p>For the emotion2vec linear probe, we used the same optimizer/loss
+family but a separate schedule to accommodate slower convergence:
+learning rate 1e-3, weight decay 1e-4, dropout 0.20, maximum epochs 50,
+early-stopping patience 10, and class weighting enabled.</p>
+<h1 id="experimental-results">4. Experimental Results</h1>
+<h2 id="weighted-f1-comparison-chart">4.1.1 Weighted-F1 comparison
+chart</h2>
+<p>Figure 1 visualizes weighted-F1 across all evaluated systems.</p>
+<figure>
+<img src="weighted_f1_chart.png"
+alt="Weighted F1 comparison across models" />
+<figcaption aria-hidden="true">Weighted F1 comparison across
+models</figcaption>
+</figure>
+<h2 id="main-test-set-comparison">4.1.2 Main test-set comparison</h2>
+<p>Table 1 summarizes the reported metrics on the common 240-sample test
+set.</p>
+<p>Abbreviations used in all tables: W2V2-WLP = wav2vec2 weighted-layer
+linear probe, W2V2-LoRA = LoRA wav2vec2, E2V-LP = emotion2vec linear
+probe, FER = XGBoostRF visual branch.</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align: right;">Accuracy</th>
+<th style="text-align: right;">Macro-F1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W2V2-WLP</td>
+<td style="text-align: right;">0.7125</td>
+<td style="text-align: right;">0.6957</td>
+</tr>
+<tr>
+<td>W2V2-LoRA</td>
+<td style="text-align: right;">0.7250</td>
+<td style="text-align: right;">0.7020</td>
+</tr>
+<tr>
+<td>E2V-LP</td>
+<td style="text-align: right;">0.6833</td>
+<td style="text-align: right;">0.6681</td>
+</tr>
+<tr>
+<td>FER</td>
+<td style="text-align: right;">0.6500</td>
+<td style="text-align: right;">0.6500</td>
+</tr>
+<tr>
+<td>W2V2-WLP + FER</td>
+<td style="text-align: right;">0.8208</td>
+<td style="text-align: right;">0.8128</td>
+</tr>
+<tr>
+<td>W2V2-LoRA + FER</td>
+<td style="text-align: right;"><strong>0.8667</strong></td>
+<td style="text-align: right;"><strong>0.8604</strong></td>
+</tr>
+<tr>
+<td>E2V-LP + FER</td>
+<td style="text-align: right;">0.8583</td>
+<td style="text-align: right;">0.8536</td>
+</tr>
+</tbody>
+</table>
+<h2 id="overall-precisionrecallf1-metrics">4.1.2 Overall
+precision/recall/F1 metrics</h2>
+<p>Table 1b reports macro precision/recall/F1 values from the test-set
+classification reports.</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align: right;">Macro-Precision</th>
+<th style="text-align: right;">Macro-Recall</th>
+<th style="text-align: right;">Macro-F1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W2V2-WLP</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">0.69</td>
+<td style="text-align: right;">0.70</td>
+</tr>
+<tr>
+<td>W2V2-LoRA</td>
+<td style="text-align: right;">0.76</td>
+<td style="text-align: right;">0.71</td>
+<td style="text-align: right;">0.70</td>
+</tr>
+<tr>
+<td>E2V-LP</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">0.67</td>
+<td style="text-align: right;">0.67</td>
+</tr>
+<tr>
+<td>FER</td>
+<td style="text-align: right;">0.70</td>
+<td style="text-align: right;">0.67</td>
+<td style="text-align: right;">0.65</td>
+</tr>
+<tr>
+<td>W2V2-WLP + FER</td>
+<td style="text-align: right;">0.84</td>
+<td style="text-align: right;">0.81</td>
+<td style="text-align: right;">0.81</td>
+</tr>
+<tr>
+<td>W2V2-LoRA + FER</td>
+<td style="text-align: right;"><strong>0.87</strong></td>
+<td style="text-align: right;"><strong>0.86</strong></td>
+<td style="text-align: right;"><strong>0.86</strong></td>
+</tr>
+<tr>
+<td>E2V-LP + FER</td>
+<td style="text-align: right;">0.86</td>
+<td style="text-align: right;">0.85</td>
+<td style="text-align: right;">0.85</td>
+</tr>
+</tbody>
+</table>
+<p>As shown in Table 1b, macro metrics are consistent with the headline
+accuracy ranking in Table 1. For wav2vec-based systems, late fusion
+improves macro precision/recall/F1. The same pattern also holds for the
+emotion2vec linear probe, where fusion improves macro-F1 from 0.67 to
+0.85.</p>
+<h2 id="fer-class-evaluation">4.2 FER class evaluation</h2>
+<p>The XGBoostRF FER model achieved 0.65 test accuracy and showed uneven
+class behavior:</p>
+<ul>
+<li>High class recall: happy (1.00), sad (0.84), angry (0.84).</li>
+<li>Low class recall: neutral (0.42), surprised (0.34).</li>
+</ul>
+<p>The class-wise performance of FER is complementary to the audio
+models, which helps explain the gains from multimodal fusion.</p>
+<h2 id="fusion-analysis-overall-class-level">4.3 Fusion analysis
+(overall + class-level)</h2>
+<p>To keep the interpretation compact, overall gains and class-level
+changes are summarized together:</p>
+<ul>
+<li>wav2vec2 weighted-layer linear probe: fusion improves accuracy from
+0.7125 to 0.8208 (+0.1083), with largest recall gains on happy (+0.41),
+sad (+0.25), and disgust (+0.12).</li>
+<li>LoRA wav2vec 2.0: fusion improves accuracy from 0.7250 to 0.8667
+(+0.1417), with largest recall gains on happy (+0.56), sad (+0.19),
+disgust (+0.16), and fearful (+0.10).</li>
+<li>emotion2vec linear probe: fusion improves accuracy from 0.6833 to
+0.8583 (+0.1750), with largest recall gains on happy (+0.56), sad
+(+0.31), and angry (+0.16).</li>
+</ul>
+<p>Overall, fusion helps all three audio branches, with the largest
+absolute gain observed for the emotion2vec linear probe in this run.</p>
+<h2 id="class-specific-precisionrecallf1-standalone-models">4.4
+Class-specific precision/recall/F1 (standalone models)</h2>
+<p>Table 1c reports class-specific precision/recall/F1 for standalone
+models.</p>
+<table>
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+<col style="width: 21%" />
+</colgroup>
+<thead>
+<tr>
+<th>Class</th>
+<th style="text-align: right;">W2V2-WLP (P/R/F1)</th>
+<th style="text-align: right;">W2V2-LoRA (P/R/F1)</th>
+<th style="text-align: right;">E2V-LP (P/R/F1)</th>
+<th style="text-align: right;">FER (P/R/F1)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>angry</td>
+<td style="text-align: right;">0.67 / 0.94 / 0.78</td>
+<td style="text-align: right;">0.65 / 1.00 / 0.79</td>
+<td style="text-align: right;">0.62 / 0.72 / 0.67</td>
+<td style="text-align: right;"><strong>0.87 / 0.84 / 0.86</strong></td>
+</tr>
+<tr>
+<td>disgust</td>
+<td style="text-align: right;"><strong>0.84 / 0.66 / 0.74</strong></td>
+<td style="text-align: right;">0.73 / 0.50 / 0.59</td>
+<td style="text-align: right;">0.66 / 0.66 / 0.66</td>
+<td style="text-align: right;">0.78 / 0.66 / 0.71</td>
+</tr>
+<tr>
+<td>fearful</td>
+<td style="text-align: right;">0.84 / 0.50 / 0.63</td>
+<td style="text-align: right;"><strong>0.81 / 0.81 / 0.81</strong></td>
+<td style="text-align: right;">0.80 / 0.75 / 0.77</td>
+<td style="text-align: right;">0.58 / 0.56 / 0.57</td>
+</tr>
+<tr>
+<td>happy</td>
+<td style="text-align: right;">0.71 / 0.53 / 0.61</td>
+<td style="text-align: right;">1.00 / 0.38 / 0.55</td>
+<td style="text-align: right;">0.56 / 0.44 / 0.49</td>
+<td style="text-align: right;"><strong>0.78 / 1.00 / 0.88</strong></td>
+</tr>
+<tr>
+<td>neutral</td>
+<td style="text-align: right;"><strong>0.73 / 0.98 / 0.84</strong></td>
+<td style="text-align: right;"><strong>0.74 / 0.96 / 0.84</strong></td>
+<td style="text-align: right;">0.72 / 0.92 / 0.81</td>
+<td style="text-align: right;">0.95 / 0.42 / 0.58</td>
+</tr>
+<tr>
+<td>sad</td>
+<td style="text-align: right;">0.47 / 0.53 / 0.50</td>
+<td style="text-align: right;">0.47 / 0.50 / 0.48</td>
+<td style="text-align: right;">0.43 / 0.38 / 0.40</td>
+<td style="text-align: right;"><strong>0.40 / 0.84 / 0.55</strong></td>
+</tr>
+<tr>
+<td>surprised</td>
+<td style="text-align: right;">0.85 / 0.72 / 0.78</td>
+<td style="text-align: right;">0.90 / 0.81 / 0.85</td>
+<td style="text-align: right;"><strong>0.96 / 0.81 / 0.88</strong></td>
+<td style="text-align: right;">0.50 / 0.34 / 0.41</td>
+</tr>
+</tbody>
+</table>
+<h2 id="class-specific-precisionrecallf1-fusion-models">4.4.1
+Class-specific precision/recall/F1 (fusion models)</h2>
+<p>Table 1d reports class-specific precision/recall/F1 for fusion
+models.</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 26%" />
+<col style="width: 26%" />
+<col style="width: 26%" />
+</colgroup>
+<thead>
+<tr>
+<th>Class</th>
+<th style="text-align: right;">W2V2-WLP + FER (P/R/F1)</th>
+<th style="text-align: right;">W2V2-LoRA + FER (P/R/F1)</th>
+<th style="text-align: right;">E2V-LP + FER (P/R/F1)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>angry</td>
+<td style="text-align: right;"><strong>0.88 / 0.94 / 0.91</strong></td>
+<td style="text-align: right;">0.82 / 1.00 / 0.90</td>
+<td style="text-align: right;">0.80 / 0.88 / 0.84</td>
+</tr>
+<tr>
+<td>disgust</td>
+<td style="text-align: right;"><strong>0.93 / 0.78 / 0.85</strong></td>
+<td style="text-align: right;">0.84 / 0.66 / 0.74</td>
+<td style="text-align: right;">0.86 / 0.75 / 0.80</td>
+</tr>
+<tr>
+<td>fearful</td>
+<td style="text-align: right;">0.94 / 0.50 / 0.65</td>
+<td style="text-align: right;"><strong>0.88 / 0.91 / 0.89</strong></td>
+<td style="text-align: right;">0.93 / 0.81 / 0.87</td>
+</tr>
+<tr>
+<td>happy</td>
+<td style="text-align: right;">0.88 / 0.94 / 0.91</td>
+<td style="text-align: right;"><strong>1.00 / 0.94 / 0.97</strong></td>
+<td style="text-align: right;">0.86 / 1.00 / 0.93</td>
+</tr>
+<tr>
+<td>neutral</td>
+<td style="text-align: right;">0.84 / 0.96 / 0.89</td>
+<td style="text-align: right;"><strong>0.87 / 0.98 / 0.92</strong></td>
+<td style="text-align: right;">0.85 / 0.96 / 0.90</td>
+</tr>
+<tr>
+<td>sad</td>
+<td style="text-align: right;">0.57 / 0.78 / 0.66</td>
+<td style="text-align: right;">0.69 / 0.69 / 0.69</td>
+<td style="text-align: right;"><strong>0.73 / 0.69 / 0.71</strong></td>
+</tr>
+<tr>
+<td>surprised</td>
+<td style="text-align: right;">0.86 / 0.78 / 0.82</td>
+<td style="text-align: right;">1.00 / 0.84 / 0.92</td>
+<td style="text-align: right;"><strong>1.00 / 0.88 / 0.93</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Class-level outcomes show that fusion benefits are uneven across
+emotions, with especially large gains for LoRA on happy, fearful, and
+sad, while already strong classes show smaller absolute changes.</p>
+<h2 id="intensity-stratified-results">4.5 Intensity-stratified
+results</h2>
+<p>Reported accuracies by emotional intensity are shown in Table 2.</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align: right;">Normal</th>
+<th style="text-align: right;">Strong</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W2V2-WLP</td>
+<td style="text-align: right;">0.6406</td>
+<td style="text-align: right;">0.7946</td>
+</tr>
+<tr>
+<td>W2V2-WLP + FER</td>
+<td style="text-align: right;">0.7422</td>
+<td style="text-align: right;"><strong>0.9107</strong></td>
+</tr>
+<tr>
+<td>W2V2-LoRA</td>
+<td style="text-align: right;">0.6406</td>
+<td style="text-align: right;">0.8214</td>
+</tr>
+<tr>
+<td>W2V2-LoRA + FER</td>
+<td style="text-align: right;"><strong>0.8359</strong></td>
+<td style="text-align: right;">0.9018</td>
+</tr>
+<tr>
+<td>E2V-LP</td>
+<td style="text-align: right;">0.5781</td>
+<td style="text-align: right;">0.8036</td>
+</tr>
+<tr>
+<td>E2V-LP + FER</td>
+<td style="text-align: right;">0.8203</td>
+<td style="text-align: right;">0.9018</td>
+</tr>
+<tr>
+<td>FER</td>
+<td style="text-align: right;">0.6406</td>
+<td style="text-align: right;">0.6607</td>
+</tr>
+</tbody>
+</table>
+<p>Observation: most models perform better on strong expressions than on
+normal intensity, consistent with the known difficulty of SER on subtle
+affective states.</p>
+<h1 id="discussion">5. Discussion</h1>
+<p>LoRA wav2vec2 remains stronger than the wav2vec2 weighted-layer
+linear probe both unimodally and after fusion. LoRA wav2vec2 improves
+from 0.7250 to 0.8667 with FER (+0.1417), while the wav2vec2
+weighted-layer linear probe improves from 0.7125 to 0.8208
+(+0.1083).</p>
+<p>At class level, the LoRA fusion model shows especially large recall
+gains for happy, sad, and disgust (Table 1d vs Table 1c), while also
+improving fearful recall, which is consistent with broader cross-modal
+error correction rather than a narrow single-class effect.</p>
+<p>The emotion2vec linear probe baseline is weaker than both wav2vec
+baselines in unimodal form (0.6833 accuracy), but benefits strongly from
+fusion (+0.1750 accuracy), reaching 0.8583 and approaching LoRA wav2vec2
++ FER.</p>
+<p>Therefore, the findings do not support emotion-specific-SSL to be
+better for SER than wav2vec.2 style pretraining. However, we are limited
+in our analysis by not reporting variance between seeds or
+cross-validation.</p>
+<h1 id="limitations">6. Limitations</h1>
+<ol type="1">
+<li>Dataset scope: only RAVDESS is evaluated.</li>
+<li>Domain realism: acted emotions differ from spontaneous
+conversation.</li>
+<li>Statistical uncertainty: no repeated-seed confidence intervals
+reported in the result log or
+k-fold-actor-disjoint-cross-validation.</li>
+<li>Although fusion substantially improves the emotion2vec linear probe,
+this branch remains below LoRA wav2vec2 + FER on overall accuracy and
+should be re-evaluated with repeated seeds to confirm stability.</li>
+</ol>
+<h1 id="conclusion">7. Conclusion</h1>
+<p>This study presents a controlled multimodal SER evaluation on RAVDESS
+with unified labels and speaker-disjoint splits. The three research
+questions are answered as follows.</p>
+<ul>
+<li><p>RQ1: under matched splits and labels, LoRA wav2vec2 outperforms
+the wav2vec2 weighted-layer linear probe unimodally (0.7250 vs 0.7125
+accuracy; 0.7020 vs 0.6957 macro-F1), and this advantage carries over to
+fusion, where LoRA wav2vec2 + FER outperforms wav2vec2 weighted-layer
+linear probe + FER (0.8667 vs 0.8208).</p></li>
+<li><p>RQ2: under matched splits and labels (with experiment-specific
+training schedules), the emotion2vec linear probe underperforms both
+wav2vec-based audio pipelines (0.6833 vs 0.7125 and 0.7250 accuracy;
+0.6681 vs 0.6957 and 0.7020 macro-F1).</p></li>
+<li><p>RQ3: calibrated late fusion improves all unimodal audio branches
+(+0.1083 for the wav2vec2 weighted-layer linear probe, +0.1417 for LoRA
+wav2vec2, and +0.1750 for the emotion2vec linear probe), with LoRA
+wav2vec2 + FER remaining the best wav2vec-based fusion system (0.8667
+accuracy).</p></li>
+</ul>
+<p>Future work could evaluate:</p>
+<ul>
+<li>the RAVDESS song subset, to test whether the same models generalise
+to song emotion recognition and other emotion-based tasks</li>
+<li>actor-disjoint k-fold cross-validation, as the main evaluation
+upgrade</li>
+<li>repeated-seed runs, to estimate uncertainty</li>
+<li>cross-lingual SER on a dataset in a different language</li>
+</ul>
+<h1 id="references">References</h1>
+<ol type="1">
+<li>Livingstone, S. R., and Russo, F. A. (2018). The Ryerson
+Audio-Visual Database of Emotional Speech and Song (RAVDESS): A dynamic,
+multimodal set of facial and vocal expressions in North American
+English. PLOS ONE, 13(5), e0196391.</li>
+<li>Baevski, A., Zhou, H., Mohamed, A., and Auli, M. (2020). wav2vec
+2.0: A framework for self-supervised learning of speech representations.
+NeurIPS.</li>
+<li>Ma, Z., Zheng, Z., Ye, J., Li, J., Gao, Z., Zhang, S., and Chen, X.
+(2024). emotion2vec: Self-supervised pre-training for speech emotion
+representation. Findings of ACL.</li>
+<li>Lashkarashvili, N., Wu, W., Sun, G., and Woodland, P. C. (2024).
+Parameter efficient finetuning for speech emotion recognition and domain
+adaptation. ICASSP.</li>
+<li>Pepino, L., Riera, P., and Ferrer, L. (2021). Emotion recognition
+from speech using wav2vec 2.0 embeddings. Interspeech.</li>
+<li>Attrah, S. (2025). Emotion estimation from video footage with LSTM.
+arXiv. DOI: 10.48550/arXiv.2501.13432.</li>
+<li>Frajtag, I., Svaco, M., and Suligoj, F. (2025). Evaluation of facial
+landmark localization performance in a surgical setting. arXiv. DOI:
+10.48550/arXiv.2507.18248.</li>
+<li>Mukhiddinov, M., Djuraev, O., Akhmedov, F., Mukhamadiyev, A., and
+Cho, J. (2023). Masked face emotion recognition based on facial
+landmarks and deep learning approaches for visually impaired people.
+Sensors, 23(3), 1080. DOI: 10.3390/s23031080.</li>
+<li>Liu, W., Chen, Y., Shi, J., and Yue, X. (2026). Beyond Magnitude:
+Scale-Invariant Evidential Fusion for Multi-View Classification.
+Proceedings of the 43rd International Conference on Machine Learning
+(PMLR 306).</li>
+<li>Course Notes (2026). Multimodal Speech Technologies:
+Audio-Visual-Text Fusion, Disambiguation, and Speech-LLM Integration.
+University lecture notes.</li>
+</ol>
+</body>
+</html>
