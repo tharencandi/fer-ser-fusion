@@ -33,13 +33,21 @@ Results come from one seed and one actor-disjoint split, without confidence inte
 
 - **Data:** RAVDESS speech (`xbgoose/ravdess` on Hugging Face), actor-disjoint split of
   16 / 4 / 4 actors (960 / 240 / 240 clips), seed 42.
-- **Speech:** 16 kHz audio up to 5.27 s. wav2vec2-base, either frozen with a learned
-  weighting of all 13 hidden layers, or LoRA-adapted on `q_proj`/`v_proj`. Or
-  `iic/emotion2vec_base`, frozen, with a small MLP head.
-- **Face:** 52 MediaPipe blendshapes per frame, summarised into 369 features: 7 statistics
-  per channel plus 5 region ratios. Classified by `XGBRFClassifier`.
+- **Speech:** 16 kHz audio up to 5.27 s.
+  - [wav2vec 2.0](https://arxiv.org/abs/2006.11477) (`facebook/wav2vec2-base`), frozen, with
+    the layer-weighted probe of [Pepino et al. (2021)](https://arxiv.org/abs/2104.03502):
+    a learned weighting of all 13 hidden states and a 128-unit frame-level dense layer.
+  - wav2vec 2.0 with LoRA (rank 4 on `q_proj`/`v_proj`), weighted layer sum and weight
+    gating, after [Lashkarashvili et al. (2024)](https://arxiv.org/abs/2402.11747), with a
+    single LayerNorm + linear classifier.
+  - [emotion2vec](https://arxiv.org/abs/2312.15185) (`iic/emotion2vec_base`), frozen, with a
+    small MLP head.
+- **Face:** MediaPipe blendshapes per frame (53 channels: the 52 ARKit blendshapes plus
+  `_neutral`), summarised into 376 features: 7 statistics per channel plus 5 region ratios.
+  Classified by `XGBRFClassifier`.
 - **Fusion:** each branch's logits are divided by a temperature fitted on the validation
-  actors, then summed; the highest score is the prediction.
+  actors and turned into probabilities with a softmax; the two are summed and the highest
+  is the prediction.
 
 ## Repository
 

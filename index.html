@@ -64,22 +64,22 @@
     <p class="note-text" style="text-align:center">Clips from RAVDESS (Livingstone &amp; Russo, 2018), CC BY-NC-SA 4.0. Strong intensity, except neutral, which RAVDESS records at normal intensity only.</p>
 
     <h2>Method</h2>
-    <p>Two independent models, one per modality, each produce a score (logit) for every emotion. The speech branch is a self-supervised encoder with a small classifier head; the face branch summarises the 52 facial <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf">blendshapes</a> from <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe Face Landmarker</a> over the clip and classifies them with an XGBoost random forest. Each branch’s logits are divided by a temperature fitted on the validation actors, so neither dominates by scale alone, and the two are summed:</p>
+    <p>Two independent models, one per modality, each produce a score (logit) for every emotion. The speech branch is a self-supervised encoder with a small classifier head; the face branch summarises the facial <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf">blendshapes</a> from <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe Face Landmarker</a> over the clip and classifies them with an XGBoost random forest. Each branch’s logits are divided by a temperature fitted on the validation actors and turned into probabilities, so neither branch dominates by scale alone, and the two sets of probabilities are summed:</p>
     <div class="equation">
       <math display="block">
         <mrow>
           <mover><mi>y</mi><mo>^</mo></mover><mo>=</mo>
           <munder><mrow><mo>arg</mo><mo>&#8289;</mo><mo>max</mo></mrow><mi>c</mi></munder>
-          <mo>(</mo>
-          <mfrac><msubsup><mi>z</mi><mi>c</mi><mrow><mo>(</mo><mi>a</mi><mo>)</mo></mrow></msubsup><msub><mi>T</mi><mi>a</mi></msub></mfrac>
+          <mo>[</mo>
+          <mi>softmax</mi><msub><mrow><mo>(</mo><mfrac><msup><mi>z</mi><mrow><mo>(</mo><mi>a</mi><mo>)</mo></mrow></msup><msub><mi>T</mi><mi>a</mi></msub></mfrac><mo>)</mo></mrow><mi>c</mi></msub>
           <mo>+</mo>
-          <mfrac><msubsup><mi>z</mi><mi>c</mi><mrow><mo>(</mo><mi>v</mi><mo>)</mo></mrow></msubsup><msub><mi>T</mi><mi>v</mi></msub></mfrac>
-          <mo>)</mo>
+          <mi>softmax</mi><msub><mrow><mo>(</mo><mfrac><msup><mi>z</mi><mrow><mo>(</mo><mi>v</mi><mo>)</mo></mrow></msup><msub><mi>T</mi><mi>v</mi></msub></mfrac><mo>)</mo></mrow><mi>c</mi></msub>
+          <mo>]</mo>
         </mrow>
       </math>
     </div>
     <figure>
-      <div class="diagram" role="img" aria-label="Pipeline: a speech branch and a face branch each produce seven temperature-scaled scores, which are summed to pick the emotion">
+      <div class="diagram" role="img" aria-label="Pipeline: a speech branch and a face branch each produce seven temperature-scaled probabilities, which are summed to pick the emotion">
         <div class="lane">
           <div class="lane-name"><span class="swatch" style="background:var(--speech)"></span>Speech</div>
           <div class="box"><b>Audio</b>16 kHz, up to 5.27 s</div>
@@ -88,31 +88,40 @@
           <div class="arrow"></div>
           <div class="box"><b>Classifier head</b>on a learned mix of the 13 layers (wav2vec 2.0)</div>
           <div class="arrow"></div>
-          <div class="box"><b>7 logits</b>÷ <i>T<sub>a</sub></i></div>
+          <div class="box"><b>7 probabilities</b>softmax(logits ÷ <i>T<sub>a</sub></i>)</div>
         </div>
         <div class="lane">
           <div class="lane-name"><span class="swatch" style="background:var(--face)"></span>Face</div>
           <div class="box"><b>Video</b>the same clip</div>
           <div class="arrow"></div>
-          <div class="box"><b><a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe</a></b>52 blendshapes per frame</div>
+          <div class="box"><b><a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe</a></b>blendshape scores per frame</div>
           <div class="arrow"></div>
-          <div class="box"><b>369 features</b>7 statistics per blendshape + 5 region ratios</div>
+          <div class="box"><b>376 features</b>7 statistics × 53 channels + 5 region ratios</div>
           <div class="arrow"></div>
-          <div class="box"><b>XGBoost RF</b>7 logits ÷ <i>T<sub>v</sub></i></div>
+          <div class="box"><b>XGBoost RF</b>softmax(logits ÷ <i>T<sub>v</sub></i>)</div>
         </div>
         <div class="down" aria-hidden="true">↓</div>
-        <div class="merge"><div class="box"><b>Sum and argmax</b>predicted emotion</div></div>
+        <div class="merge"><div class="box"><b>Sum the probabilities, take the highest</b>predicted emotion</div></div>
       </div>
-      <figcaption><b>Figure 1.</b> Late fusion. The speech encoder is either frozen or LoRA-adapted (rank 4 on the attention projections); emotion2vec uses its pooled embedding without layer weighting.</figcaption>
+      <figcaption><b>Figure 1.</b> Late fusion. Each speech model below is fused with the same face model; the temperatures are fitted by minimising cross-entropy on the validation actors.</figcaption>
     </figure>
+    <h3>Speech models</h3>
+    <ul>
+      <li><b>wav2vec 2.0, frozen.</b> <a href="https://arxiv.org/abs/2006.11477">wav2vec 2.0</a> [1] learns speech representations by self-supervised masked prediction on unlabelled audio; we use the <a href="https://huggingface.co/facebook/wav2vec2-base">wav2vec2-base</a> checkpoint. The probe follows Pepino et al. [3], who found that emotion cues are spread across the encoder’s layers: a learned softmax weighting combines all 13 hidden states (the CNN feature encoder and the 12 transformer layers), each frame passes through a 128-unit dense layer, and the frames are mean-pooled and classified. We use one dense layer where their best model uses two.</li>
+      <li><b>wav2vec 2.0, LoRA.</b> Parameter-efficient fine-tuning as in Lashkarashvili et al. [4]: LoRA adapters of rank 4 on the attention’s query and value projections, plus their weighted sum of all layers (WS) and a learned sigmoid gate on the hidden features (WG). We replace their two-layer downstream classifier with LayerNorm and one linear layer, so the comparison isolates the effect of adapting the encoder.</li>
+      <li><b>emotion2vec, frozen.</b> <a href="https://arxiv.org/abs/2312.15185">emotion2vec</a> [2] is pretrained by self-supervised distillation on emotional speech. We freeze <a href="https://huggingface.co/emotion2vec/emotion2vec_base">emotion2vec_base</a> and train a 128-unit classifier head on its pooled embedding. We avoid the emotion2vec+ checkpoints, which are fine-tuned for classification with a teacher that has seen RAVDESS.</li>
+    </ul>
+    <p>The wav2vec 2.0 models use mild SpecAugment-style masking (about 5% of time steps and feature channels) so that short prosodic cues survive. All three are trained with class-weighted cross-entropy, AdamW with a cosine schedule, and early stopping on validation loss.</p>
+
+    <h3>Data and face features</h3>
     <ul>
       <li><b>Data.</b> The RAVDESS speech subset, split by actor: 16 for training, 4 for validation and 4 for testing (960 / 240 / 240 clips), so test voices and faces are unseen.</li>
       <li><b>Labels.</b> Seven emotions: angry, disgust, fearful, happy, neutral, sad and surprised, with calm merged into neutral.</li>
-      <li><b>Face features.</b> Blendshapes keep facial-action intensities and drop background, lighting and appearance. Neural sequence models on them overfit in early tests, so each clip is summarised for a tree ensemble instead.</li>
+      <li><b>Face features.</b> Blendshapes keep facial-action intensities and drop background, lighting and appearance. Each clip is summarised by 7 statistics (mean, standard deviation, max, min, range, mean and max velocity) for each of 53 channels, the 52 ARKit blendshapes plus MediaPipe’s <code>_neutral</code> score, and 5 ratios between face regions, then classified by an <a href="https://xgboost.readthedocs.io/en/stable/tutorials/rf.html">XGBoost random forest</a>. Neural sequence models on the raw blendshapes overfit in early tests.</li>
     </ul>
     <figure>
       <img class="figure-img" src="assets/img/face_landmarker.jpg" width="880" height="482" alt="A face photo, and the same face with MediaPipe's fitted face mesh drawn over it">
-      <figcaption><b>Figure 2.</b> <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe Face Landmarker</a> fits a mesh of 478 3D landmarks to each video frame (right), and a second model turns it into 52 <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf">blendshape</a> scores, coefficients for expressions such as <code>jawOpen</code> or <code>mouthSmileLeft</code>. The face branch uses only these scores. Image: Google, <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe documentation</a>, CC BY 4.0.</figcaption>
+      <figcaption><b>Figure 2.</b> <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe Face Landmarker</a> fits a mesh of 478 3D landmarks to each video frame (right), and a second model turns it into <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf">blendshape</a> scores, coefficients for expressions such as <code>jawOpen</code> or <code>mouthSmileLeft</code>. The face branch uses only these scores. Image: Google, <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe documentation</a>, CC BY 4.0.</figcaption>
     </figure>
 
     <h2>Results</h2>
@@ -196,6 +205,16 @@
       <li><b>Does adding the face help?</b> Yes, for every speech model (+10.8, +14.2 and +17.5 points). The face model is strong where speech is weak (happy, sad) and weak where speech is strong (neutral, surprised).</li>
     </ol>
     <p><b>Limitations.</b> Results come from one random seed and one actor split, without confidence intervals, so small gaps such as frozen vs LoRA alone may not hold up; repeated seeds and actor-wise cross-validation are the next step. RAVDESS emotions are acted by professionals and are clearer than everyday conversation.</p>
+
+    <h2>References</h2>
+    <ol class="refs">
+      <li>A. Baevski, H. Zhou, A. Mohamed and M. Auli (2020). <a href="https://arxiv.org/abs/2006.11477">wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations</a>. <i>NeurIPS</i>.</li>
+      <li>Z. Ma, Z. Zheng, J. Ye, J. Li, Z. Gao, S. Zhang and X. Chen (2024). <a href="https://arxiv.org/abs/2312.15185">emotion2vec: Self-Supervised Pre-Training for Speech Emotion Representation</a>. <i>Findings of ACL</i>. <a href="https://github.com/ddlBoJack/emotion2vec">Code</a>.</li>
+      <li>L. Pepino, P. Riera and L. Ferrer (2021). <a href="https://arxiv.org/abs/2104.03502">Emotion Recognition from Speech Using wav2vec 2.0 Embeddings</a>. <i>Interspeech</i>.</li>
+      <li>N. Lashkarashvili, W. Wu, G. Sun and P. C. Woodland (2024). <a href="https://arxiv.org/abs/2402.11747">Parameter Efficient Finetuning for Speech Emotion Recognition and Domain Adaptation</a>. <i>ICASSP</i>.</li>
+      <li>S. R. Livingstone and F. A. Russo (2018). <a href="https://doi.org/10.1371/journal.pone.0196391">The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS)</a>. <i>PLOS ONE</i> 13(5): e0196391.</li>
+      <li>Google. <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe Face Landmarker</a> and the <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf">Blendshape V2 model card</a>.</li>
+    </ol>
 
     <h2>Citation</h2>
 <pre class="bibtex">@misc{candi2026hearing,

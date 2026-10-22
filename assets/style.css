@@ -175,6 +175,9 @@ details summary { cursor: pointer; color: var(--link); font-size: 0.95em; }
 details .table-wrap { text-align: left; }
 table.scores { font-size: 0.85em; }
 
+ol.refs { padding-left: 1.6em; font-size: 0.95em; }
+ol.refs li { margin: 0.45em 0; }
+
 pre.bibtex {
   font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   background: var(--wash); border: 1px solid var(--wash-2); border-radius: 4px; padding: 14px 16px; overflow-x: auto;
