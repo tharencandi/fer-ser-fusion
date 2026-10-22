@@ -14,22 +14,36 @@
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-  <header>
+  <div class="topbar">
+    <div class="inner">
+      <span class="name">Hearing and Seeing Emotion</span>
+      <nav><a href="report/">Report</a><a href="https://github.com/tharencandi/fer-ser-fusion">Code</a><a href="https://tharencandi.net/">tharencandi.net</a></nav>
+    </div>
+  </div>
+
+  <div class="container">
+  <header class="paper">
     <h1>Hearing and Seeing Emotion</h1>
     <p class="subtitle">Multimodal speech emotion recognition with late fusion of self-supervised audio models and facial blendshapes on RAVDESS</p>
-    <p class="byline"><a href="https://tharencandi.net/">Tharen Candi</a></p>
+    <p class="authors"><a href="https://tharencandi.net/">Tharen Candi</a></p>
     <p class="affil">University of Padova · Speech Processing course project, 2026</p>
-    <p class="links">
-      <span>[<a href="report/">Report</a>]</span>
-      <span>[<a href="report/report.pdf">PDF</a>]</span>
-      <span>[<a href="https://github.com/tharencandi/fer-ser-fusion/blob/main/notebook/ser_fer_fusion_ravdess.ipynb">Notebook</a>]</span>
-      <span>[<a href="https://github.com/tharencandi/fer-ser-fusion">Code</a>]</span>
-    </p>
   </header>
+  <div class="buttons">
+    <a class="button" href="report/"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3.5 1.5h6l3 3v10h-9z"/><path d="M9.5 1.5v3h3M5.5 7.5h5M5.5 10h5M5.5 12.5h3"/></svg>Report</a>
+    <a class="button" href="report/report.pdf"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3.5 1.5h6l3 3v10h-9z"/><path d="M9.5 1.5v3h3M8 6.5v5M5.8 9.5 8 11.7l2.2-2.2"/></svg>PDF</a>
+    <a class="button" href="https://github.com/tharencandi/fer-ser-fusion/blob/main/notebook/ser_fer_fusion_ravdess.ipynb"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 3h4.5A2 2 0 0 1 8 5v9a1.5 1.5 0 0 0-1.5-1.5h-5zM14.5 3H10a2 2 0 0 0-2 2v9a1.5 1.5 0 0 1 1.5-1.5h5z"/></svg>Notebook</a>
+    <a class="button" href="https://github.com/tharencandi/fer-ser-fusion"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>Code</a>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>86.7%</b><span>best fused accuracy</span></div>
+    <div class="stat"><b>+10.8–17.5</b><span>accuracy points from fusion</span></div>
+    <div class="stat"><b>7</b><span>emotions</span></div>
+    <div class="stat"><b>4</b><span>unseen test actors</span></div>
+  </div>
 
   <main>
     <h2>Abstract</h2>
-    <p class="abstract">Self-supervised speech models are a strong baseline for speech emotion recognition, but they still confuse emotions whose prosody is similar, such as happy and sad. We combine three speech models (wav2vec 2.0 frozen, wav2vec 2.0 with LoRA, and emotion2vec) with a facial-expression model built on MediaPipe blendshapes, using temperature-calibrated late fusion. On RAVDESS, with test actors unseen in training, fusion improves every speech model by 10.8 to 17.5 accuracy points. The best system, LoRA-adapted wav2vec 2.0 with the face model, reaches 86.7% on seven emotions, against 72.5% for speech and 65.0% for the face alone. The two modalities fail on different emotions, so each corrects the other.</p>
+    <p>Self-supervised speech models are a strong baseline for speech emotion recognition, but they still confuse emotions whose prosody is similar, such as happy and sad. We combine three speech models (wav2vec 2.0 frozen, wav2vec 2.0 with LoRA, and emotion2vec) with a facial-expression model built on MediaPipe blendshapes, using temperature-calibrated late fusion. On RAVDESS, with test actors unseen in training, fusion improves every speech model by 10.8 to 17.5 accuracy points. The best system, LoRA-adapted wav2vec 2.0 with the face model, reaches 86.7% on seven emotions, against 72.5% for speech and 65.0% for the face alone. The two modalities fail on different emotions, so each corrects the other.</p>
 
     <h2>Audio examples</h2>
     <p>Every RAVDESS actor reads the same two sentences in each emotion, so the words carry no information: the emotion has to be heard in the voice. These clips are two actors saying “Kids are talking by the door.”</p>
@@ -47,10 +61,10 @@
         </tbody>
       </table>
     </div>
-    <p class="caption">Clips from RAVDESS (Livingstone &amp; Russo, 2018), CC BY-NC-SA 4.0. Strong intensity, except neutral, which RAVDESS records at normal intensity only.</p>
+    <p class="note-text" style="text-align:center">Clips from RAVDESS (Livingstone &amp; Russo, 2018), CC BY-NC-SA 4.0. Strong intensity, except neutral, which RAVDESS records at normal intensity only.</p>
 
     <h2>Method</h2>
-    <p>Two independent models, one per modality, each produce a score (logit) for every emotion. The speech branch is a self-supervised encoder with a small classifier head; the face branch summarises MediaPipe’s 52 facial blendshapes over the clip and classifies them with an XGBoost random forest. Each branch’s logits are divided by a temperature fitted on the validation actors, so neither dominates by scale alone, and the two are summed:</p>
+    <p>Two independent models, one per modality, each produce a score (logit) for every emotion. The speech branch is a self-supervised encoder with a small classifier head; the face branch summarises the 52 facial <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf">blendshapes</a> from <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe Face Landmarker</a> over the clip and classifies them with an XGBoost random forest. Each branch’s logits are divided by a temperature fitted on the validation actors, so neither dominates by scale alone, and the two are summed:</p>
     <div class="equation">
       <math display="block">
         <mrow>
@@ -80,7 +94,7 @@
           <div class="lane-name"><span class="swatch" style="background:var(--face)"></span>Face</div>
           <div class="box"><b>Video</b>the same clip</div>
           <div class="arrow"></div>
-          <div class="box"><b>MediaPipe</b>52 blendshapes per frame</div>
+          <div class="box"><b><a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe</a></b>52 blendshapes per frame</div>
           <div class="arrow"></div>
           <div class="box"><b>369 features</b>7 statistics per blendshape + 5 region ratios</div>
           <div class="arrow"></div>
@@ -96,12 +110,16 @@
       <li><b>Labels.</b> Seven emotions: angry, disgust, fearful, happy, neutral, sad and surprised, with calm merged into neutral.</li>
       <li><b>Face features.</b> Blendshapes keep facial-action intensities and drop background, lighting and appearance. Neural sequence models on them overfit in early tests, so each clip is summarised for a tree ensemble instead.</li>
     </ul>
+    <figure>
+      <img class="figure-img" src="assets/img/face_landmarker.jpg" width="880" height="482" alt="A face photo, and the same face with MediaPipe's fitted face mesh drawn over it">
+      <figcaption><b>Figure 2.</b> <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe Face Landmarker</a> fits a mesh of 478 3D landmarks to each video frame (right), and a second model turns it into 52 <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf">blendshape</a> scores, coefficients for expressions such as <code>jawOpen</code> or <code>mouthSmileLeft</code>. The face branch uses only these scores. Image: Google, <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe documentation</a>, CC BY 4.0.</figcaption>
+    </figure>
 
     <h2>Results</h2>
     <div class="table-wrap">
       <table class="booktabs">
         <caption><b>Table 1.</b> Test results on 240 clips from 4 unseen actors.</caption>
-        <thead><tr><th>Model</th><th>Accuracy</th><th>Macro-F1</th></tr></thead>
+        <thead><tr><th>Model</th><th>Accuracy</th><th>Macro&#8209;F1</th></tr></thead>
         <tbody>
           <tr class="group"><td colspan="3">Speech only</td></tr>
           <tr><td>wav2vec 2.0, frozen</td><td>71.3%</td><td>0.696</td></tr>
@@ -119,18 +137,18 @@
 
     <figure>
       <div class="legend">
-        <span class="item"><span class="swatch" style="background:var(--speech);border-radius:50%"></span>Speech only</span>
-        <span class="item"><span class="swatch" style="background:var(--fused);border-radius:50%"></span>Speech + face</span>
+        <span class="item"><span class="swatch dot" style="background:var(--speech)"></span>Speech only</span>
+        <span class="item"><span class="swatch dot" style="background:var(--fused)"></span>Speech + face</span>
         <span class="item"><span class="swatch line" style="background:var(--face)"></span>Face only</span>
       </div>
       <div class="chart" id="fusion-chart"></div>
-      <figcaption><b>Figure 2.</b> Accuracy of each speech model alone and fused with the face model. The face model alone scores below every speech model, yet every fused system beats both of its parts.</figcaption>
+      <figcaption><b>Figure 3.</b> Accuracy of each speech model alone and fused with the face model. The face model alone scores below every speech model, yet every fused system beats both of its parts.</figcaption>
     </figure>
 
     <h3>Where the face model helps</h3>
     <p>Choose a speech model to compare it, emotion by emotion, with the face model and with the two fused.</p>
-    <div class="controls" id="model-select" role="radiogroup" aria-label="Speech model"></div>
-    <p class="caption" id="model-summary"></p>
+    <div class="selector"><div class="seg" id="model-select" role="radiogroup" aria-label="Speech model"></div></div>
+    <p class="summary" id="model-summary"></p>
 
     <figure>
       <div class="legend">
@@ -139,7 +157,7 @@
         <span class="item"><span class="swatch line" style="background:var(--fused)"></span>Speech + face</span>
       </div>
       <div class="chart" id="recall-chart"></div>
-      <figcaption><b>Figure 3.</b> Recall by emotion: the share of each emotion’s test clips labelled correctly. <span id="insight"></span></figcaption>
+      <figcaption><b>Figure 4.</b> Recall by emotion: the share of each emotion’s test clips labelled correctly. <span id="insight"></span></figcaption>
     </figure>
 
     <figure>
@@ -147,7 +165,7 @@
         <div class="matrix" id="cm-alone"></div>
         <div class="matrix" id="cm-fused"></div>
       </div>
-      <figcaption><b>Figure 4.</b> Confusion matrices before and after fusion (rows: actual emotion, columns: predicted). Shading is the share of each actual emotion’s clips.</figcaption>
+      <figcaption><b>Figure 5.</b> Confusion matrices before and after fusion (rows: actual emotion, columns: predicted). Shading is the share of each actual emotion’s clips.</figcaption>
     </figure>
 
     <details>
@@ -193,9 +211,10 @@
   <footer>
     <p>Data: S. R. Livingstone and F. A. Russo (2018), “The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS)”, <i>PLOS ONE</i> 13(5): e0196391. Audio clips used under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>.</p>
   </footer>
+  </div>
 
   <div class="tip" id="tip" role="tooltip"></div>
-  <noscript><p>Figures 2 to 4 need JavaScript; the <a href="report/">full report</a> has every result as a table.</p></noscript>
+  <noscript><p>Figures 3 to 5 need JavaScript; the <a href="report/">full report</a> has every result as a table.</p></noscript>
   <script src="assets/data.js"></script>
   <script src="assets/app.js"></script>
 </body>

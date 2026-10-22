@@ -243,7 +243,7 @@
     const label = h("label", {}, group);
     const input = h("input", { type: "radio", name: "speech-model", value: m.id }, label);
     input.checked = m === current;
-    label.appendChild(document.createTextNode(m.name));
+    h("span", {}, label, m.name);
     input.addEventListener("change", () => { current = m; drawModel(); });
   }
 
