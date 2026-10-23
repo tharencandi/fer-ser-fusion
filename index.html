@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hearing and Seeing Emotion · Tharen Candi</title>
+  <meta name="description" content="Multimodal speech emotion recognition on RAVDESS: late fusion of self-supervised speech models (wav2vec 2.0, emotion2vec) with a facial-blendshape XGBoost model, evaluated with 6-fold actor-wise cross-validation: 78.5% accuracy over all 24 actors.">
+  <meta name="author" content="Tharen Candi">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Hearing and Seeing Emotion">
+  <meta property="og:description" content="Fusing speech and facial-expression models to recognise seven emotions on RAVDESS: 78.5% accuracy over 24 unseen actors (6-fold actor-wise cross-validation).">
+  <meta property="og:url" content="https://tharencandi.net/fer-ser-fusion/">
+  <link rel="icon" href="https://tharencandi.net/favicon.ico">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="inner">
+      <span class="name">Hearing and Seeing Emotion</span>
+      <nav><a href="report/">Report</a><a href="https://github.com/tharencandi/fer-ser-fusion">Code</a><a href="https://tharencandi.net/">tharencandi.net</a></nav>
+    </div>
+  </div>
+
+  <div class="container">
+  <header class="paper">
+    <h1>Hearing and Seeing Emotion</h1>
+    <p class="subtitle">Multimodal speech emotion recognition with late fusion of self-supervised audio models and facial blendshapes on RAVDESS</p>
+    <p class="authors"><a href="https://tharencandi.net/">Tharen Candi</a></p>
+    <p class="affil">University of Padova · Speech Processing course project, 2026</p>
+  </header>
+  <div class="buttons">
+    <a class="button" href="report/"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3.5 1.5h6l3 3v10h-9z"/><path d="M9.5 1.5v3h3M5.5 7.5h5M5.5 10h5M5.5 12.5h3"/></svg>Report</a>
+    <a class="button" href="report/report.pdf"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M3.5 1.5h6l3 3v10h-9z"/><path d="M9.5 1.5v3h3M8 6.5v5M5.8 9.5 8 11.7l2.2-2.2"/></svg>PDF</a>
+    <a class="button" href="https://github.com/tharencandi/fer-ser-fusion/blob/main/notebook/ser_fer_fusion_ravdess_cv.ipynb"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 3h4.5A2 2 0 0 1 8 5v9a1.5 1.5 0 0 0-1.5-1.5h-5zM14.5 3H10a2 2 0 0 0-2 2v9a1.5 1.5 0 0 1 1.5-1.5h5z"/></svg>Notebook</a>
+    <a class="button" href="https://github.com/tharencandi/fer-ser-fusion"><svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>Code</a>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>78.5%</b><span>best fused accuracy</span></div>
+    <div class="stat"><b>+5.3–7.7</b><span>accuracy points from fusion</span></div>
+    <div class="stat"><b>7</b><span>emotions</span></div>
+    <div class="stat"><b>24</b><span>actors, each tested once</span></div>
+  </div>
+
+  <main>
+    <h2>Abstract</h2>
+    <p>Self-supervised speech models are a strong baseline for speech emotion recognition, but they still confuse emotions whose prosody is similar, such as happy and sad. We combine five speech pipelines built on wav2vec 2.0 and emotion2vec with a facial-expression model built on MediaPipe blendshapes, using temperature-calibrated late fusion, and evaluate everything with 6-fold actor-wise cross-validation on RAVDESS, so every one of the 24 actors is tested once on models that never saw them. Fusion improves every speech model, by 5.3 to 7.7 accuracy points (all 95% confidence intervals above zero). The best system, LoRA-adapted wav2vec 2.0 with the face model, reaches 78.5%, against 73.2% for speech and 60.4% for the face alone. Under a matched probe and training recipe, frozen wav2vec 2.0 and frozen emotion2vec are not reliably different. On the published actor folds of Luna-Jiménez et al., the face model alone is within a few points of published face-only results.</p>
+
+    <h2>Audio examples</h2>
+    <p>Every RAVDESS actor reads the same two sentences in each emotion, so the words carry no information: the emotion has to be heard in the voice. These clips are two actors saying “Kids are talking by the door.”</p>
+    <div class="table-wrap">
+      <table class="booktabs audio">
+        <thead><tr><th>Emotion</th><th>Actor 01</th><th>Actor 02</th></tr></thead>
+        <tbody>
+          <tr><td>Angry</td><td><audio controls preload="none" src="assets/audio/a01-angry.wav"></audio></td><td><audio controls preload="none" src="assets/audio/a02-angry.wav"></audio></td></tr>
+          <tr><td>Disgust</td><td><audio controls preload="none" src="assets/audio/a01-disgust.wav"></audio></td><td><audio controls preload="none" src="assets/audio/a02-disgust.wav"></audio></td></tr>
+          <tr><td>Fearful</td><td><audio controls preload="none" src="assets/audio/a01-fearful.wav"></audio></td><td><audio controls preload="none" src="assets/audio/a02-fearful.wav"></audio></td></tr>
+          <tr><td>Happy</td><td><audio controls preload="none" src="assets/audio/a01-happy.wav"></audio></td><td><audio controls preload="none" src="assets/audio/a02-happy.wav"></audio></td></tr>
+          <tr><td>Neutral</td><td><audio controls preload="none" src="assets/audio/a01-neutral.wav"></audio></td><td><audio controls preload="none" src="assets/audio/a02-neutral.wav"></audio></td></tr>
+          <tr><td>Sad</td><td><audio controls preload="none" src="assets/audio/a01-sad.wav"></audio></td><td><audio controls preload="none" src="assets/audio/a02-sad.wav"></audio></td></tr>
+          <tr><td>Surprised</td><td><audio controls preload="none" src="assets/audio/a01-surprised.wav"></audio></td><td><audio controls preload="none" src="assets/audio/a02-surprised.wav"></audio></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note-text" style="text-align:center">Clips from RAVDESS (Livingstone &amp; Russo, 2018), CC BY-NC-SA 4.0. Strong intensity, except neutral, which RAVDESS records at normal intensity only.</p>
+
+    <h2>Method</h2>
+    <p>Two independent models, one per modality, each produce a score (logit) for every emotion. The speech branch is a self-supervised encoder with a small classifier head; the face branch summarises the facial <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf">blendshapes</a> from <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe Face Landmarker</a> over the clip and classifies them with an XGBoost random forest. Each branch’s logits are divided by a temperature fitted on the validation actors and turned into probabilities, so neither branch dominates by scale alone, and the two sets of probabilities are summed:</p>
+    <div class="equation">
+      <math display="block">
+        <mrow>
+          <mover><mi>y</mi><mo>^</mo></mover><mo>=</mo>
+          <munder><mrow><mo>arg</mo><mo>&#8289;</mo><mo>max</mo></mrow><mi>c</mi></munder>
+          <mo>[</mo>
+          <mi>softmax</mi><msub><mrow><mo>(</mo><mfrac><msup><mi>z</mi><mrow><mo>(</mo><mi>a</mi><mo>)</mo></mrow></msup><msub><mi>T</mi><mi>a</mi></msub></mfrac><mo>)</mo></mrow><mi>c</mi></msub>
+          <mo>+</mo>
+          <mi>softmax</mi><msub><mrow><mo>(</mo><mfrac><msup><mi>z</mi><mrow><mo>(</mo><mi>v</mi><mo>)</mo></mrow></msup><msub><mi>T</mi><mi>v</mi></msub></mfrac><mo>)</mo></mrow><mi>c</mi></msub>
+          <mo>]</mo>
+        </mrow>
+      </math>
+    </div>
+    <figure>
+      <div class="diagram" role="img" aria-label="Pipeline: a speech branch and a face branch each produce seven temperature-scaled probabilities, which are summed to pick the emotion">
+        <div class="lane">
+          <div class="lane-name"><span class="swatch" style="background:var(--speech)"></span>Speech</div>
+          <div class="box"><b>Audio</b>16 kHz, up to 5.27 s</div>
+          <div class="arrow"></div>
+          <div class="box"><b>Encoder</b>wav2vec 2.0 (frozen or LoRA) or emotion2vec</div>
+          <div class="arrow"></div>
+          <div class="box"><b>Classifier head</b>on a learned mix of the 13 layers (last layer only for the emotion2vec final-layer probe)</div>
+          <div class="arrow"></div>
+          <div class="box"><b>7 probabilities</b>softmax(logits ÷ <i>T<sub>a</sub></i>)</div>
+        </div>
+        <div class="lane">
+          <div class="lane-name"><span class="swatch" style="background:var(--face)"></span>Face</div>
+          <div class="box"><b>Video</b>the same clip</div>
+          <div class="arrow"></div>
+          <div class="box"><b><a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe</a></b>blendshape scores per frame</div>
+          <div class="arrow"></div>
+          <div class="box"><b>376 features</b>7 statistics × 53 channels + 5 region ratios</div>
+          <div class="arrow"></div>
+          <div class="box"><b>XGBoost RF</b>softmax(logits ÷ <i>T<sub>v</sub></i>)</div>
+        </div>
+        <div class="down" aria-hidden="true">↓</div>
+        <div class="merge"><div class="box"><b>Sum the probabilities, take the highest</b>predicted emotion</div></div>
+      </div>
+      <figcaption><b>Figure 1.</b> Late fusion. Each speech model below is fused with the same face model; the temperatures are fitted by minimising cross-entropy on the validation actors.</figcaption>
+    </figure>
+    <h3>Speech models</h3>
+    <ul>
+      <li><b>wav2vec 2.0, weighted-layer probe.</b> <a href="https://arxiv.org/abs/2006.11477">wav2vec 2.0</a> [1] learns speech representations by self-supervised masked prediction on unlabelled audio; we use the <a href="https://huggingface.co/facebook/wav2vec2-base">wav2vec2-base</a> checkpoint. The probe follows Pepino et al. [3], who found that emotion cues are spread across the encoder’s layers: a learned softmax weighting combines all 13 hidden states (the CNN feature encoder and the 12 transformer layers), each frame passes through a 128-unit dense layer, and the frames are mean-pooled and classified.</li>
+      <li><b>wav2vec 2.0, LoRA.</b> Parameter-efficient fine-tuning as in Lashkarashvili et al. [4]: LoRA adapters of rank 4 on the attention’s query and value projections, their weighted sum of all layers and a learned sigmoid gate on the hidden features, then LayerNorm and one linear layer. The LoRA settings follow the paper and were not tuned.</li>
+      <li><b>emotion2vec, final-layer probe.</b> <a href="https://arxiv.org/abs/2312.15185">emotion2vec</a> [2] is pretrained by self-supervised distillation on emotional speech. We freeze <a href="https://huggingface.co/emotion2vec/emotion2vec_base">emotion2vec_base</a> and train a 128-unit classifier head on its final layer. We avoid the emotion2vec+ checkpoints, which are fine-tuned with a teacher that has seen RAVDESS.</li>
+      <li><b>Matched probes, wav2vec 2.0 and emotion2vec.</b> To compare the two encoders fairly, both are frozen and given the same probe (a learned weighting of all 13 hidden states, then a 128-unit head; 99,348 trainable parameters each), the same training recipe and the same 4-setting hyperparameter grid, selected on validation actors. Each clip runs through the encoder at its true length, so no padding enters the average.</li>
+    </ul>
+    <p>The weighted-layer probe and LoRA wav2vec 2.0 models use mild SpecAugment-style masking (about 5% of time steps and feature channels) so that short prosodic cues survive. All models are trained with class-weighted cross-entropy, AdamW with a cosine schedule, and early stopping on validation loss.</p>
+
+    <h3>Data and face features</h3>
+    <ul>
+      <li><b>Data.</b> The RAVDESS speech subset (1440 clips, 24 actors), evaluated with 6-fold actor-wise cross-validation. Each fold tests 4 actors (2 male, 2 female), validates on 4 others and trains on the remaining 16, so every actor is tested once, on models that never saw their voice or face. Model selection and fusion temperatures use the validation actors only.</li>
+      <li><b>Seeds.</b> The systems that train on cached frozen features, the face model and their fusions are repeated with 3 seeds; the two wav2vec 2.0 systems that train with the encoder in the loop use one seed.</li>
+      <li><b>Labels.</b> Seven emotions: angry, disgust, fearful, happy, neutral, sad and surprised, with calm merged into neutral.</li>
+      <li><b>Face features.</b> Blendshapes keep facial-action intensities and drop background, lighting and appearance. Each clip is summarised by 7 statistics (mean, standard deviation, max, min, range, mean and max velocity) for each of 53 channels, the 52 ARKit blendshapes plus MediaPipe’s <code>_neutral</code> score, and 5 ratios between face regions, then classified by an <a href="https://xgboost.readthedocs.io/en/stable/tutorials/rf.html">XGBoost random forest</a>. Neural sequence models on the raw blendshapes overfit in early tests.</li>
+    </ul>
+    <figure>
+      <img class="figure-img" src="assets/img/face_landmarker.jpg" width="880" height="482" alt="A face photo, and the same face with MediaPipe's fitted face mesh drawn over it">
+      <figcaption><b>Figure 2.</b> <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe Face Landmarker</a> fits a mesh of 478 3D landmarks to each video frame (right), and a second model turns it into <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf">blendshape</a> scores, coefficients for expressions such as <code>jawOpen</code> or <code>mouthSmileLeft</code>. The face branch uses only these scores. Image: Google, <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe documentation</a>, CC BY 4.0.</figcaption>
+    </figure>
+
+    <h2>Results</h2>
+    <div class="table-wrap">
+      <table class="booktabs">
+        <caption><b>Table 1.</b> Accuracy pooled over all 24 actors (1440 clips) with 95% actor-bootstrap confidence intervals, and macro-F1; mean over seeds where there are several.</caption>
+        <thead><tr><th>Model</th><th>Seeds</th><th>Accuracy</th><th>95% CI</th><th>Macro&#8209;F1</th></tr></thead>
+        <tbody>
+          <tr class="group"><td colspan="5">Speech only</td></tr>
+          <tr><td>wav2vec 2.0, matched probe</td><td>3</td><td>72.0%</td><td>66.8–76.6</td><td>0.716</td></tr>
+          <tr><td>emotion2vec, matched probe</td><td>3</td><td>68.7%</td><td>65.3–71.7</td><td>0.675</td></tr>
+          <tr><td>wav2vec 2.0, weighted-layer probe</td><td>1</td><td>66.9%</td><td>63.7–70.0</td><td>0.649</td></tr>
+          <tr><td>wav2vec 2.0, LoRA</td><td>1</td><td>73.2%</td><td>69.1–76.9</td><td>0.727</td></tr>
+          <tr><td>emotion2vec, final-layer probe</td><td>3</td><td>66.9%</td><td>63.5–70.3</td><td>0.655</td></tr>
+          <tr class="group"><td colspan="5">Face only</td></tr>
+          <tr><td>Blendshapes + XGBoost RF</td><td>3</td><td>60.4%</td><td>56.6–64.3</td><td>0.589</td></tr>
+          <tr class="group"><td colspan="5">Speech + face</td></tr>
+          <tr><td>wav2vec 2.0, matched probe + face</td><td>3</td><td>77.5%</td><td>73.7–81.4</td><td>0.769</td></tr>
+          <tr><td>emotion2vec, matched probe + face</td><td>3</td><td>76.4%</td><td>72.8–80.0</td><td>0.754</td></tr>
+          <tr><td>wav2vec 2.0, weighted-layer probe + face</td><td>1</td><td>74.4%</td><td>71.0–77.8</td><td>0.730</td></tr>
+          <tr><td>wav2vec 2.0, LoRA + face</td><td>1</td><td><b>78.5%</b></td><td>75.0–81.9</td><td><b>0.778</b></td></tr>
+          <tr><td>emotion2vec, final-layer probe + face</td><td>3</td><td>74.4%</td><td>71.1–77.6</td><td>0.733</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure>
+      <div class="legend">
+        <span class="item"><span class="swatch dot" style="background:var(--speech)"></span>Speech only</span>
+        <span class="item"><span class="swatch dot" style="background:var(--fused)"></span>Speech + face</span>
+        <span class="item"><span class="swatch line" style="background:var(--face)"></span>Face only</span>
+      </div>
+      <div class="chart" id="fusion-chart"></div>
+      <figcaption><b>Figure 3.</b> Accuracy over all 24 actors of each speech model alone and fused with the face model; hover for confidence intervals. The face model alone scores below every speech model, yet every fused system beats both of its parts.</figcaption>
+    </figure>
+
+    <h3>Where the face model helps</h3>
+    <p>Choose a speech model to compare it, emotion by emotion, with the face model and with the two fused.</p>
+    <div class="selector"><div class="seg" id="model-select" role="radiogroup" aria-label="Speech model"></div></div>
+    <p class="summary" id="model-summary"></p>
+
+    <figure>
+      <div class="legend">
+        <span class="item"><span class="swatch line" style="background:var(--speech)"></span>Speech only</span>
+        <span class="item"><span class="swatch line" style="background:var(--face)"></span>Face only</span>
+        <span class="item"><span class="swatch line" style="background:var(--fused)"></span>Speech + face</span>
+      </div>
+      <div class="chart" id="recall-chart"></div>
+      <figcaption><b>Figure 4.</b> Recall by emotion: the share of each emotion’s test clips labelled correctly. <span id="insight"></span></figcaption>
+    </figure>
+
+    <figure>
+      <div class="matrices">
+        <div class="matrix" id="cm-alone"></div>
+        <div class="matrix" id="cm-fused"></div>
+      </div>
+      <figcaption><b>Figure 5.</b> Confusion matrices before and after fusion, pooled over the six test folds (rows: actual emotion, columns: predicted); for multi-seed systems, counts are averaged over seeds. Shading is the share of each actual emotion’s clips.</figcaption>
+    </figure>
+
+    <details>
+      <summary>Per-class precision, recall and F1 for this model</summary>
+      <div class="table-wrap" id="score-table"></div>
+    </details>
+
+    <div class="table-wrap">
+      <table class="booktabs">
+        <caption><b>Table 2.</b> Gain from adding the face model in each test fold (accuracy points; mean over seeds where there are several). Fold 3 is where the face model is weakest.</caption>
+        <thead><tr><th>Speech model</th><th>Overall</th><th>F0</th><th>F1</th><th>F2</th><th>F3</th><th>F4</th><th>F5</th></tr></thead>
+        <tbody>
+          <tr><td>wav2vec 2.0, matched probe</td><td>+5.6</td><td>+5.1</td><td>+9.6</td><td>+6.4</td><td>−4.2</td><td>+7.1</td><td>+9.3</td></tr>
+          <tr><td>emotion2vec, matched probe</td><td>+7.7</td><td>+9.6</td><td>+8.1</td><td>+8.3</td><td>+0.6</td><td>+7.4</td><td>+12.5</td></tr>
+          <tr><td>wav2vec 2.0, weighted-layer probe</td><td>+7.4</td><td>+5.0</td><td>+4.6</td><td>+8.3</td><td>+3.8</td><td>+13.3</td><td>+9.6</td></tr>
+          <tr><td>wav2vec 2.0, LoRA</td><td>+5.3</td><td>+7.5</td><td>+12.1</td><td>+5.8</td><td>−7.5</td><td>+4.6</td><td>+9.2</td></tr>
+          <tr><td>emotion2vec, final-layer probe</td><td>+7.5</td><td>+10.6</td><td>+6.8</td><td>+6.7</td><td>+1.8</td><td>+9.0</td><td>+10.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-wrap">
+      <table class="booktabs">
+        <caption><b>Table 3.</b> Paired comparisons on the same clips (difference in accuracy points, 95% actor-bootstrap CI).</caption>
+        <thead><tr><th>Comparison</th><th>Speech only</th><th>With face</th></tr></thead>
+        <tbody>
+          <tr><td>wav2vec 2.0 − emotion2vec, matched probes (3 seeds)</td><td>+3.3 [−0.6, +7.0]</td><td>+1.1 [−1.2, +3.3]</td></tr>
+          <tr><td>wav2vec 2.0 LoRA − weighted-layer probe (1 seed)</td><td><b>+6.2</b> [+2.7, +9.7]</td><td><b>+4.1</b> [+1.7, +6.5]</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-wrap">
+      <table class="booktabs">
+        <caption><b>Table 4.</b> Accuracy by emotional intensity. Subtle, normal-intensity clips are harder for every speech model; the face model barely notices the difference, so fusion helps most there.</caption>
+        <thead><tr><th>Model</th><th>Normal</th><th>Strong</th></tr></thead>
+        <tbody>
+          <tr><td>wav2vec 2.0, matched probe</td><td>67.4%</td><td>77.1%</td></tr>
+          <tr><td>wav2vec 2.0, matched probe + face</td><td>74.7%</td><td>80.8%</td></tr>
+          <tr class="sep"><td>emotion2vec, matched probe</td><td>64.4%</td><td>73.6%</td></tr>
+          <tr><td>emotion2vec, matched probe + face</td><td>74.2%</td><td>78.9%</td></tr>
+          <tr class="sep"><td>wav2vec 2.0, LoRA</td><td>68.1%</td><td>79.0%</td></tr>
+          <tr><td>wav2vec 2.0, LoRA + face</td><td><b>75.8%</b></td><td><b>81.5%</b></td></tr>
+          <tr class="sep"><td>Face only</td><td>58.9%</td><td>62.1%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Findings</h2>
+    <ol>
+      <li><b>Does adding the face help?</b> Yes, for every speech model: +5.3 to +7.7 accuracy points over all 24 actors, with every confidence interval above zero, and in every test fold for three of the five models. The face model is strong where speech is weak (happy) and weak where speech is strong (surprised, fearful). On actors whose faces it reads poorly (fold 3), equal-weight fusion can lower accuracy.</li>
+      <li><b>Does emotion-specific pretraining win?</b> No, and it does not lose either. With the same probe, recipe and tuning budget, frozen wav2vec 2.0 is 3.3 points ahead of frozen emotion2vec, but the difference is within the uncertainty (95% CI −0.6 to +7.0) and each wins three of six folds.</li>
+      <li><b>Frozen or LoRA wav2vec 2.0?</b> The LoRA pipeline beats the frozen-probe pipeline, by 6.2 points alone and 4.1 points with the face model. The two pipelines also differ in their classifier heads, and LoRA was run with one seed.</li>
+    </ol>
+
+    <h3>How good is the face model?</h3>
+    <p>Run alone on the exact five actor folds and eight classes (calm kept apart from neutral) of Luna-Jiménez et al. [7], the blendshape face model reaches 57.9%, against 62.13% for their OpenFace action units with a bi-LSTM and 60.22% for their static MLP. The face features differ, and no held-out actors were used for model selection here. Calm and neutral are rarely confused from the face (4–8% of clips); neutral is mistaken for sad more often. The <a href="report/">report</a> has the details.</p>
+    <p><b>Limitations.</b> The two wav2vec 2.0 systems that train with the encoder in the loop were run with one seed. LoRA was not evaluated under the matched protocol, so the fair encoder comparison covers frozen encoders only. With 24 actors the uncertainty about new speakers stays substantial, and RAVDESS emotions are acted by professionals and are clearer than everyday conversation.</p>
+
+    <h2>References</h2>
+    <ol class="refs">
+      <li>A. Baevski, H. Zhou, A. Mohamed and M. Auli (2020). <a href="https://arxiv.org/abs/2006.11477">wav2vec 2.0: A Framework for Self-Supervised Learning of Speech Representations</a>. <i>NeurIPS</i>.</li>
+      <li>Z. Ma, Z. Zheng, J. Ye, J. Li, Z. Gao, S. Zhang and X. Chen (2024). <a href="https://arxiv.org/abs/2312.15185">emotion2vec: Self-Supervised Pre-Training for Speech Emotion Representation</a>. <i>Findings of ACL</i>. <a href="https://github.com/ddlBoJack/emotion2vec">Code</a>.</li>
+      <li>L. Pepino, P. Riera and L. Ferrer (2021). <a href="https://arxiv.org/abs/2104.03502">Emotion Recognition from Speech Using wav2vec 2.0 Embeddings</a>. <i>Interspeech</i>.</li>
+      <li>N. Lashkarashvili, W. Wu, G. Sun and P. C. Woodland (2024). <a href="https://arxiv.org/abs/2402.11747">Parameter Efficient Finetuning for Speech Emotion Recognition and Domain Adaptation</a>. <i>ICASSP</i>.</li>
+      <li>S. R. Livingstone and F. A. Russo (2018). <a href="https://doi.org/10.1371/journal.pone.0196391">The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS)</a>. <i>PLOS ONE</i> 13(5): e0196391.</li>
+      <li>Google. <a href="https://developers.google.com/edge/mediapipe/solutions/vision/face_landmarker">MediaPipe Face Landmarker</a> and the <a href="https://storage.googleapis.com/mediapipe-assets/Model%20Card%20Blendshape%20V2.pdf">Blendshape V2 model card</a>.</li>
+      <li>C. Luna-Jiménez, R. Kleinlein, D. Griol, Z. Callejas, J. M. Montero and F. Fernández-Martínez (2022). <a href="https://doi.org/10.3390/app12010327">A Proposal for Multimodal Emotion Recognition Using Aural Transformers and Action Units on RAVDESS Dataset</a>. <i>Applied Sciences</i> 12(1): 327.</li>
+    </ol>
+
+    <h2>Citation</h2>
+<pre class="bibtex">@misc{candi2026hearing,
+  title  = {Multimodal Speech Emotion Recognition with Late Fusion of
+            Self-Supervised Audio Models and Visual Blendshape Features on RAVDESS},
+  author = {Candi, Tharen Emmanuel},
+  year   = {2026},
+  note   = {Course project, University of Padova},
+  url    = {https://tharencandi.net/fer-ser-fusion/}
+}</pre>
+  </main>
+
+  <footer>
+    <p>Data: S. R. Livingstone and F. A. Russo (2018), “The Ryerson Audio-Visual Database of Emotional Speech and Song (RAVDESS)”, <i>PLOS ONE</i> 13(5): e0196391. Audio clips used under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>.</p>
+  </footer>
+  </div>
+
+  <div class="tip" id="tip" role="tooltip"></div>
+  <noscript><p>Figures 3 to 5 need JavaScript; the <a href="report/">full report</a> has every result as a table.</p></noscript>
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

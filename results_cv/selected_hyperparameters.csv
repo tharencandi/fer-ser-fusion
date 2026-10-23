@@ -1,0 +1,8 @@
+system,cfg,times_selected
+e2v_frozen_matched,lr1e-03_do0.10,14
+e2v_frozen_matched,lr1e-03_do0.30,4
+e2v_lp,fixed,18
+w2v_frozen_matched,lr1e-03_do0.10,17
+w2v_frozen_matched,lr1e-03_do0.30,1
+w2v_lora,fixed,6
+w2v_wlp,fixed,6

@@ -1,0 +1,6 @@
+system,label,layer_weights,weight_gate,lora,head,trainable_total,frozen
+w2v_frozen_matched,W2V2 frozen (matched),13,0,0,99335,99348,94370944
+e2v_frozen_matched,E2V frozen (matched),13,0,0,99335,99348,93790988
+w2v_wlp,W2V2-WLP,13,0,0,99335,99348,94371712
+w2v_lora,W2V2-LoRA,13,768,147456,6919,155156,94371712
+e2v_lp,E2V-LP,0,0,0,99335,99335,93790988

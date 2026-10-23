@@ -1,0 +1,134 @@
+{
+  "n_clips": 1440,
+  "n_actors": 24,
+  "n_clips_total": 1440,
+  "n_actors_total": 24,
+  "seed_design": {
+    "w2v_frozen_matched": [
+      42,
+      43,
+      44
+    ],
+    "e2v_frozen_matched": [
+      42,
+      43,
+      44
+    ],
+    "w2v_wlp": [
+      42
+    ],
+    "w2v_lora": [
+      42
+    ],
+    "e2v_lp": [
+      42,
+      43,
+      44
+    ],
+    "fer": [
+      42,
+      43,
+      44
+    ],
+    "w2v_frozen_matched+fer": [
+      42,
+      43,
+      44
+    ],
+    "e2v_frozen_matched+fer": [
+      42,
+      43,
+      44
+    ],
+    "w2v_wlp+fer": [
+      42
+    ],
+    "w2v_lora+fer": [
+      42
+    ],
+    "e2v_lp+fer": [
+      42,
+      43,
+      44
+    ]
+  },
+  "cv_folds": [
+    "fold0",
+    "fold1",
+    "fold2",
+    "fold3",
+    "fold4",
+    "fold5"
+  ],
+  "partial": false,
+  "n_cv_folds_total": 6,
+  "seeds_per_system": {
+    "w2v_frozen_matched": [
+      42,
+      43,
+      44
+    ],
+    "e2v_frozen_matched": [
+      42,
+      43,
+      44
+    ],
+    "w2v_wlp": [
+      42
+    ],
+    "w2v_lora": [
+      42
+    ],
+    "e2v_lp": [
+      42,
+      43,
+      44
+    ],
+    "fer": [
+      42,
+      43,
+      44
+    ],
+    "w2v_frozen_matched+fer": [
+      42,
+      43,
+      44
+    ],
+    "e2v_frozen_matched+fer": [
+      42,
+      43,
+      44
+    ],
+    "w2v_wlp+fer": [
+      42
+    ],
+    "w2v_lora+fer": [
+      42
+    ],
+    "e2v_lp+fer": [
+      42,
+      43,
+      44
+    ]
+  },
+  "bootstrap_B": 10000,
+  "systems": [
+    "w2v_frozen_matched",
+    "e2v_frozen_matched",
+    "w2v_wlp",
+    "w2v_lora",
+    "e2v_lp",
+    "fer",
+    "w2v_frozen_matched+fer",
+    "e2v_frozen_matched+fer",
+    "w2v_wlp+fer",
+    "w2v_lora+fer",
+    "e2v_lp+fer"
+  ],
+  "fold_seed": 42,
+  "n_nonpositive_temperatures": 0,
+  "temperature_range": [
+    0.30168450726953244,
+    1.729278595438081
+  ]
+}
